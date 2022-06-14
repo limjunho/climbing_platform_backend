@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dao.UserMapper">
+
+  <select id="login" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserConfirm.login_dto">
+    SELECT *
+    FROM 
+      (SELECT * 
+      FROM user_account
+      WHERE user_index != 1) AS account
+    WHERE user_id = #{user_id} AND password = #{password}
+  </select>
+
+  <select id="idDupllicateCheck" resultType="java.lang.String">
+    SELECT user_id
+    FROM user_account
+    WHERE user_id = #{user_id}
+  </select>
+
+  <select id="emailDupllicateCheck" resultType="java.lang.String">
+    SELECT email
+    FROM user_information
+    WHERE email = #{email}
+  </select>
+
+  <select id="nicknameDupllicateCheck" resultType="java.lang.String">
+    SELECT nickname
+    FROM user_information
+    WHERE nickname = #{nickname}
+  </select>
+
+  <insert id="userjoin" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserJoin.user_join_dto">
+    INSERT INTO user_information(user_index, user_name, email, phone, nickname, device_token, join_date)
+    VALUES(#{user_index}, #{user_name}, #{email}, #{phone}, #{nickname}, #{device_token}, #{join_date});
+
+    INSERT INTO user_account(user_index, user_id, password)
+    VALUES((SELECT user_index FROM user_information ORDER BY user_index DESC LIMIT 1), #{user_id}, #{password});
+
+    INSERT INTO user_permit(user_index, email_permit, sms_permit, push_permit)
+    VALUES((SELECT user_index FROM user_information ORDER BY user_index DESC LIMIT 1), 0, 0, 0)
+  </insert>
+
+  <delete id="deleteUser" parameterType="int">
+    DELETE FROM user_account
+    WHERE user_index = #{user_index};
+
+    DELETE FROM user_permit
+    WHERE user_index = #{user_index};
+
+    DELETE FROM user_clearlist
+    WHERE user_index = #{user_index};
+
+    DELETE FROM user_information
+    WHERE user_index = #{user_index}
+  </delete>
+
+  <select id="passwordExistCheck" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserConfirm.passwordExistCheck_dto" resultType="java.lang.String">
+    SELECT password
+    FROM user_account
+    WHERE password = #{password} AND user_index = #{user_index}
+  </select>
+
+  <select id="idExistCheck" parameterType="int" resultType="java.lang.String">
+    SELECT user_id
+    FROM user_account
+    WHERE user_index = #{user_index}
+  </select>
+
+  <update id="modifyPassword" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserManage.modifyPassword_dto">
+    UPDATE user_account
+    SET password = #{password}
+    WHERE user_index = #{user_index}
+  </update>
+
+  <update id="modifyPhoneNumber" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserManage.modifyPhoneNumber_dto">
+    UPDATE user_information
+    SET phone = #{phone}
+    WHERE user_index = #{user_index}
+  </update>
+
+  <update id="modifyEmail" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserManage.modifyEmail_dto">
+    UPDATE user_information
+    SET email = #{email}
+    WHERE user_index = #{user_index}
+  </update>
+
+  <update id="modifyPushPermit" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserManage.modifyPushPermit_dto">
+    UPDATE user_permit
+    SET push_permit = #{push_permit}
+    WHERE user_index = #{user_index}
+  </update>
+
+  <update id="modifySmsPermit" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserManage.modifySmsPermit_dto">
+    UPDATE user_permit
+    SET sms_permit = #{sms_permit}
+    WHERE user_index = #{user_index}
+  </update>
+
+  <update id="modifyEmailPermit" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserManage.modifyEmailPermit_dto">
+    UPDATE user_permit
+    SET Email_permit = #{Email_permit}
+    WHERE user_index = #{user_index}
+  </update>
+
+</mapper>

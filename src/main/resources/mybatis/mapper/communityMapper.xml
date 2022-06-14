@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dao.CommunityMapper">
+
+  <insert id="createPost" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_list">
+    INSERT INTO post_list(post_index, header, body, post_date, nickname, modify_time, isImage, comment_count, like_count)
+    VALUES(#{post_index}, #{header}, #{body}, #{post_date}, #{nickname}, #{modify_time, jdbcType=VARCHAR}, #{isImage, jdbcType=VARCHAR}, #{comment_count}, #{like_count})
+  </insert>
+
+  <insert id="uploadPostImage" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_image">
+    INSERT INTO post_image(image_index, post_index, origin_name, size, path)
+    VALUES(#{image_index}, #{post_index}, #{origin_name}, #{size}, #{path})
+  </insert>
+
+  <select id="checkPostIndex" resultType="int">
+    SELECT post_index FROM post_list ORDER BY post_index DESC LIMIT 1;
+  </select>
+
+  <update id="modifyPost" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_list">
+    UPDATE post_list
+    SET header = #{header}, body = #{body}, modify_time = #{modify_time}
+    WHERE post_index = #{post_index}
+  </update>
+
+  <delete id="deletePost" parameterType="int">
+    DELETE FROM post_list
+    WHERE post_index = #{post_index}
+  </delete>
+
+  <select id="getPostList" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.get_post_list_dto">
+    SELECT DISTINCT a.post_index, header, LEFT(body, 50) AS body, post_date, modify_time, isImage, comment_count, like_count, CASE WHEN idx > 0 THEN 1 ELSE 0 END AS isLike 
+    FROM post_list AS a 
+      LEFT JOIN (SELECT * 
+        FROM post_likes WHERE nickname = #{nickname}) AS b
+      ON a.post_index = b.post_index;
+  </select>
+
+  <select id="getPostList_popular_like" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.get_post_list_dto">
+    SELECT DISTINCT a.post_index, header, LEFT(body, 50) AS body, post_date, modify_time, isImage, comment_count, like_count, CASE WHEN idx > 0 THEN 1 ELSE 0 END AS isLike 
+    FROM post_list AS a 
+      LEFT JOIN (SELECT * 
+        FROM post_likes WHERE nickname = #{nickname}) AS b
+      ON a.post_index = b.post_index
+    ORDER BY like_count DESC;
+  </select>
+
+  <select id="getPostList_popular_comments" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.get_post_list_dto">
+    SELECT DISTINCT a.post_index, header, LEFT(body, 50) AS body, post_date, modify_time, isImage, comment_count, like_count, CASE WHEN idx > 0 THEN 1 ELSE 0 END AS isLike 
+    FROM post_list AS a 
+      LEFT JOIN (SELECT * 
+        FROM post_likes WHERE nickname = #{nickname}) AS b
+      ON a.post_index = b.post_index
+    ORDER BY comment_count DESC;
+  </select>
+
+  <select id="getPostList_author" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.get_post_list_dto">
+    SELECT DISTINCT a.post_index, header, LEFT(body, 50) AS body, post_date, modify_time, isImage, comment_count, like_count, CASE WHEN idx > 0 THEN 1 ELSE 0 END AS isLike 
+    FROM post_list AS a 
+      LEFT JOIN (SELECT * 
+        FROM post_likes WHERE nickname = #{nickname}) AS b
+      ON a.post_index = b.post_index
+    WHERE a.nickname = #{nickname};
+  </select>
+
+  <select id="getPostList_commentByMyself" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.get_post_list_dto">
+    SELECT DISTINCT a.post_index, header, LEFT(body, 50) AS body, post_date, modify_time, isImage, comment_count, like_count, CASE WHEN d.idx > 0 THEN 1 ELSE 0 END AS isLike 
+    FROM post_list AS a 
+      LEFT JOIN post_comments AS b 
+      ON a.post_index = b.post_index 
+        LEFT JOIN post_reply AS c 
+        ON a.post_index = c.post_index 
+          LEFT JOIN (SELECT * FROM post_likes WHERE nickname = #{nickname}) AS d 
+          ON a.post_index = d.post_index 
+    WHERE b.nickname = #{nickname} OR c.nickname = #{nickname};
+  </select>
+
+  <select id="getPost" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.get_post_dto">
+    SELECT a.*, CASE WHEN idx > 0 THEN 1 ELSE 0 END AS isLike 
+    FROM post_list AS a 
+      LEFT JOIN (SELECT * FROM post_likes WHERE nickname = #{nickname}) AS b 
+      ON a.post_index = b.post_index 
+    WHERE a.post_index = #{post_index};
+  </select>
+
+  <select id="postExistCheck" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_comments">
+    SELECT *
+    FROM post_list
+    WHERE post_index = #{post_index}
+  </select>
+
+  <select id="getPostImage" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.get_image_dto">
+    SELECT image_index, path FROM post_image WHERE post_index = #{post_index}
+  </select>
+
+  <select id="searchPostByContents" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.get_post_list_dto">
+    SELECT post_index, header, LEFT(body, 50) AS body, post_date, modify_time, isImage, comment_count, like_count FROM post_list
+    WHERE header LIKE CONCAT('%',#{contents},'%') OR body LIKE CONCAT('%',#{contents},'%')
+  </select>
+
+  <select id="searchPostByNickname" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.get_post_list_dto">
+    SELECT post_index, header, LEFT(body, 50) AS body, post_date, modify_time, isImage, comment_count, like_count FROM post_list
+    WHERE nickname LIKE CONCAT('%',#{nickname},'%')
+  </select>
+
+  <select id="getNoticeList" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.notice_list">
+    SELECT notice_index, header, LEFT(body, 50) AS body, post_date, modify_date, isImage FROM notice_list
+  </select>
+
+  <select id="getNotice" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.notice_list">
+    SELECT notice_index, header, LEFT(body, 50) AS body, post_date, modify_date FROM notice_list WHERE notice_index = #{notice_index}
+  </select>
+
+  <select id="getNoticeImage" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.get_image_dto">
+    SELECT image_index, path FROM notice_image WHERE notice_index = #{notice_index}
+  </select>
+
+  <insert id="createComments" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_comments">
+    INSERT INTO post_comments(comment_index, post_index, nickname, comment, record_time, is_modified)
+    VALUES(#{comment_index}, #{post_index}, #{nickname}, #{comment}, #{record_time}, #{is_modified});
+
+    UPDATE post_list SET comment_count = comment_count + 1
+    WHERE post_index = #{post_index};
+  </insert>
+
+  <update id="modifyComments" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_comments">
+    UPDATE post_comments
+    SET comment = #{comment}, is_modified = #{is_modified}
+    WHERE comment_index = #{comment_index}
+  </update>
+
+  <delete id="deleteComments" parameterType="int">
+    DELETE FROM post_comments
+    WHERE comment_index = #{comment_index};
+
+    UPDATE post_list SET comment_count = comment_count - 1
+    WHERE post_index = #{post_index};
+  </delete>
+
+  <insert id="createReplies" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.create_post_reply_dto">
+    INSERT INTO post_reply(idx, post_index, comment_index, nickname, reply, record_time, is_modified)
+    VALUES(#{idx}, #{post_index}, #{comment_index}, #{nickname}, #{reply}, #{record_time}, #{is_modified});
+
+    UPDATE post_list SET comment_count = comment_count + 1
+    WHERE post_index = #{post_index};
+  </insert>
+
+  <delete id="deleteReplies" parameterType="int">
+    DELETE FROM post_reply
+    WHERE idx = #{idx};
+
+    UPDATE post_list SET comment_count = comment_count - 1
+    WHERE post_index = #{post_index};
+  </delete>
+
+  <select id="getComments" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_comments">
+    SELECT *
+    FROM post_comments
+    WHERE post_index = #{post_index}
+  </select>
+
+  <select id="getReplies" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_reply">
+    SELECT *
+    FROM post_reply
+    WHERE post_index = #{post_index}
+  </select>
+
+  <select id="commentExistCheck" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_comments">
+    SELECT *
+    FROM post_comments
+    WHERE comment_index = #{comment_index}
+  </select>
+
+  <select id="getLikes" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_likes" resultType="int">
+    SELECT IFNULL(idx, "0") FROM post_likes
+    WHERE post_index = #{post_index} AND nickname = #{nickname}
+  </select>
+
+  <insert id="createLikes" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Community.post_likes">
+    INSERT INTO post_likes(idx, post_index, nickname, like_time)
+    SELECT #{idx}, #{post_index}, #{nickname}, #{like_time}
+    FROM DUAL WHERE NOT EXISTS(SELECT * FROM post_likes WHERE post_index = #{post_index} AND nickname = #{nickname});
+
+    UPDATE post_list SET like_count = like_count + 1
+    WHERE post_index = #{post_index};
+  </insert>
+
+  <delete id="deleteLikes" parameterType="int">
+    DELETE FROM post_likes
+    WHERE idx = #{idx};
+
+    UPDATE post_list SET like_count = like_count - 1
+    WHERE post_index = #{post_index};
+  </delete>
+
+</mapper>

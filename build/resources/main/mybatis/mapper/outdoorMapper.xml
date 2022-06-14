@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dao.OutdoorMapper">
+
+  <select id="getLocationList" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.get_outdoor_location_list_dto">
+    SELECT location_index, latitude, longitude, name FROM outdoor_location
+  </select>
+
+  <select id="getLocationList_clear" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.get_outdoor_location_list_dto">
+    SELECT DISTINCT a.location_index, a.latitude, a.longitude, a.name 
+    FROM outdoor_location AS a 
+      RIGHT JOIN outdoor_route AS b 
+      ON a.location_index = b.location_index 
+        RIGHT JOIN user_clearlist AS c 
+        ON b.route_index = c.route_index 
+        WHERE user_index = #{user_index};
+  </select>
+
+  <select id="getLocationInfo" parameterType="int" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.get_outdoorLocation_dto">
+    SELECT location_index, address_province, address_city, address_detail, name, description, isImage, score, 
+    IFNULL((SELECT score FROM outdoor_score WHERE user_index = #{user_index} AND location_index = #{location_index}), 0) AS userScore 
+    FROM outdoor_location 
+    WHERE location_index = #{location_index};
+  </select>
+
+  <select id="getLocationImage" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.get_image_dto">
+    SELECT image_index, path FROM location_image WHERE location_index = #{location_index}
+  </select>
+
+  <select id="getRouteInfo" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.get_outdoor_route_dto">
+    SELECT a.*, CASE WHEN b.idx > 0 THEN 1 ELSE 0 END AS isLike, CASE WHEN c.route_index > 0 THEN 1 ELSE 0 END AS isClear 
+    FROM outdoor_route AS a 
+      LEFT JOIN (SELECT * FROM outdoor_route_likes WHERE nickname = #{nickname}) AS b 
+      ON a.route_index = b.route_index 
+        LEFT JOIN (SELECT * FROM user_clearlist WHERE user_index = #{user_index}) AS c 
+        ON a.route_index = c.route_index
+    WHERE location_index = #{location_index}
+  </select>
+
+  <select id="getRouteInfo_populer" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.get_outdoor_route_dto">
+    SELECT a.*, CASE WHEN b.idx > 0 THEN 1 ELSE 0 END AS isLike, CASE WHEN c.route_index > 0 THEN 1 ELSE 0 END AS isClear 
+    FROM outdoor_route AS a 
+      LEFT JOIN (SELECT * FROM outdoor_route_likes WHERE nickname = #{nickname}) AS b 
+      ON a.route_index = b.route_index 
+        LEFT JOIN (SELECT * FROM user_clearlist WHERE user_index = #{user_index}) AS c 
+        ON a.route_index = c.route_index
+    WHERE location_index = #{location_index} 
+    ORDER BY like_count DESC;
+  </select>
+
+  <select id="getRouteInfo_difficulty" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.get_outdoor_route_dto">
+    SELECT a.*, CASE WHEN b.idx > 0 THEN 1 ELSE 0 END AS isLike, CASE WHEN c.route_index > 0 THEN 1 ELSE 0 END AS isClear 
+    FROM outdoor_route AS a 
+      LEFT JOIN (SELECT * FROM outdoor_route_likes WHERE nickname = #{nickname}) AS b 
+      ON a.route_index = b.route_index 
+        LEFT JOIN (SELECT * FROM user_clearlist WHERE user_index = #{user_index}) AS c 
+        ON a.route_index = c.route_index
+    WHERE location_index = #{location_index} 
+    ORDER BY difficulty DESC;
+  </select>
+
+  <select id="getRouteInfo_clear" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.get_outdoor_route_dto">
+    SELECT a.*, CASE WHEN b.idx > 0 THEN 1 ELSE 0 END AS isLike, CASE WHEN c.route_index > 0 THEN 1 ELSE 0 END AS isClear 
+    FROM outdoor_route AS a 
+      LEFT JOIN (SELECT * FROM outdoor_route_likes WHERE nickname = #{nickname}) AS b 
+      ON a.route_index = b.route_index 
+        LEFT JOIN user_clearlist AS c 
+        ON a.route_index = c.route_index 
+    WHERE location_index = #{location_index} AND 
+    c.user_index = #{user_index} 
+    ORDER BY like_count DESC;
+  </select>
+
+  <select id="getRouteInfo_clearByMyself" parameterType="int" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.outdoor_route">
+    SELECT a.* 
+    FROM outdoor_route AS a 
+      LEFT JOIN user_clearlist AS b 
+      ON a.route_index = b.route_index 
+      WHERE b.user_index = #{user_index};
+  </select>
+
+  <select id="getRouteImage" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.get_image_dto">
+    SELECT image_index, path FROM route_image WHERE route_index = #{route_index}
+  </select>
+
+  <select id="getNickname" parameterType="int" resultType="java.lang.String">
+    SELECT nickname 
+    FROM user_information 
+    WHERE user_index = #{user_index};
+  </select>
+
+  <select id="locationExistCheck" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.get_outdoorLocation_dto">
+    SELECT location_index, address_province, address_city, address_detail, name, description, isImage, score FROM outdoor_location
+    WHERE location_index = #{location_index}
+  </select>
+
+  <select id="routeExistCheck" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.outdoor_route">
+    SELECT *
+    FROM outdoor_route
+    WHERE route_index = #{route_index}
+  </select>
+
+  <select id="getComments" parameterType="int" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.getOutdoor_comments_dto">
+    SELECT idx, nickname, comment, record_time
+    FROM outdoor_comments
+    WHERE route_index = #{route_index}
+  </select>
+
+  <insert id="createComments" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.create_outdoor_comments_dto">
+    INSERT INTO outdoor_comments(idx, route_index, nickname, comment, record_time)
+    VALUES(#{idx}, #{route_index}, #{nickname}, #{comment}, #{record_time})
+  </insert>
+
+  <delete id="deleteComments" parameterType="int">
+    DELETE FROM outdoor_comments
+    WHERE idx = #{idx}
+  </delete>
+
+  <select id="getLikes" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.outdoor_likes" resultType="int">
+    SELECT IFNULL(idx, "0") FROM outdoor_route_likes
+    WHERE route_index = #{route_index} AND nickname = #{nickname}
+  </select>
+
+  <insert id="createLikes" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.outdoor_likes">
+    INSERT INTO outdoor_route_likes(idx, route_index, nickname, like_time)
+    SELECT #{idx}, #{route_index}, #{nickname}, #{like_time}
+    FROM DUAL WHERE NOT EXISTS(SELECT * FROM outdoor_route_likes WHERE route_index = #{route_index} AND nickname = #{nickname});
+
+    UPDATE outdoor_route SET like_count = like_count + 1;
+  </insert>
+
+  <delete id="deleteLikes" parameterType="int">
+    DELETE FROM outdoor_route_likes
+    WHERE idx = #{idx};
+
+    UPDATE outdoor_route SET like_count = like_count - 1;
+  </delete>
+
+  <select id="getClear" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.outdoor_likes" resultType="int">
+    SELECT IFNULL(idx, "0") FROM user_clearlist
+    WHERE route_index = #{route_index} AND user_index = #{user_index}
+  </select>
+
+  <select id="getClearRouteCount" parameterType="int" resultType="int">
+    SELECT COUNT(route_index) AS count 
+    FROM user_clearlist 
+    WHERE user_index = #{user_index};
+  </select>
+
+  <select id="getClearCountGroupByLocation" parameterType="int" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.getClearCountGroupByLocation_dto">
+    SELECT 
+      (SELECT COUNT(route_index) FROM outdoor_route WHERE location_index = b.location_index) AS routeCount, 
+      COUNT(a.route_index) AS clearCount, b.name
+      FROM outdoor_route AS a 
+        LEFT JOIN outdoor_location AS b 
+        ON a.location_index = b.location_index 
+          LEFT JOIN user_clearlist AS c 
+          ON a.route_index = c.route_index 
+          WHERE user_index = #{user_index} 
+            GROUP BY b.name;
+  </select>
+
+  <insert id="createClear" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.outdoor_likes">
+    INSERT INTO user_clearlist(idx, user_index, route_index, clear_date)
+    SELECT #{idx}, #{user_index}, #{route_index}, #{clear_date}
+    FROM DUAL WHERE NOT EXISTS(SELECT * FROM user_clearlist WHERE route_index = #{route_index} AND user_index = #{user_index});
+
+    UPDATE outdoor_route SET like_count = like_count + 1;
+  </insert>
+
+  <delete id="deleteClear" parameterType="int">
+    DELETE FROM user_clearlist
+    WHERE idx = #{idx};
+
+    UPDATE outdoor_route SET like_count = like_count - 1;
+  </delete>
+
+  <select id="clearDifficultyAverage" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.difficultyAverage_dto" parameterType="int">
+    SELECT difficulty 
+    FROM user_clearlist AS a 
+      LEFT JOIN outdoor_route AS b 
+      ON a.route_index = b.route_index WHERE user_index = #{user_index};
+  </select>
+
+  <select id="scoreExistCheck" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.outdoor_score" 
+resultType="Integer">
+    SELECT idx FROM outdoor_score
+    WHERE user_index = #{user_index} AND location_index = #{location_index}
+  </select>
+
+  <insert id="createScore" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.create_outdoor_score_dto">
+    INSERT INTO outdoor_score(idx, user_index, location_index, score)
+    VALUES(#{idx}, #{user_index}, #{location_index}, #{score});
+
+    UPDATE outdoor_location 
+      SET score = (SELECT sum(score) 
+        FROM outdoor_score 
+        WHERE location_index = #{location_index}) / (SELECT COUNT(*)
+          FROM outdoor_score
+          WHERE location_index = #{location_index})
+      WHERE location_index = #{location_index};
+  </insert>
+
+  <update id="modifyScore" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.outdoor.create_outdoor_score_dto">
+    UPDATE outdoor_score
+    SET score = #{score}
+    WHERE user_index = #{user_index} AND location_index = #{location_index};
+
+    UPDATE outdoor_location 
+      SET score = (SELECT sum(score) 
+        FROM outdoor_score 
+        WHERE location_index = #{location_index}) / (SELECT COUNT(*)
+          FROM outdoor_score
+          WHERE location_index = #{location_index})
+      WHERE location_index = #{location_index};
+  </update>
+
+  <delete id="deleteScore" parameterType="int">
+    DELETE FROM outdoor_score
+    WHERE idx = #{idx};
+
+    UPDATE outdoor_location 
+      SET score = (SELECT sum(score) 
+        FROM outdoor_score 
+        WHERE location_index = #{location_index}) / (SELECT COUNT(*)
+          FROM outdoor_score
+          WHERE location_index = #{location_index})
+      WHERE location_index = #{location_index};
+  </delete>
+
+</mapper>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dao.ManageMapper">
+
+  <select id="login" resultType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.user.UserConfirm.login_dto">
+    SELECT * 
+    FROM 
+      (SELECT * 
+      FROM user_account 
+      WHERE user_index = 1) AS account
+    WHERE user_id = #{user_id} AND password = #{password}
+  </select>
+
+  <insert id="createNotice" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.notice_list">
+    INSERT INTO notice_list(notice_index, header, body, post_date, modify_date, isImage)
+    VALUES(#{notice_index}, #{header}, #{body}, #{post_date}, #{modify_date, jdbcType=VARCHAR}, #{isImage, jdbcType=VARCHAR})
+  </insert>
+
+  <insert id="uploadNoticeImage" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.notice_image">
+    INSERT INTO notice_image(image_index, notice_index, origin_name, size, path)
+    VALUES(#{image_index}, #{notice_index}, #{origin_name}, #{size}, #{path})
+  </insert>
+
+  <select id="checkNoticeIndex" resultType="int">
+    SELECT notice_index FROM notice_list ORDER BY notice_index DESC LIMIT 1;
+  </select>
+
+  <update id="modifyNotice" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.notice_list">
+    UPDATE notice_list
+    SET header = #{header}, body = #{body}, modify_date = #{modify_date}
+    WHERE notice_index = #{notice_index}
+  </update>
+
+  <delete id="deleteNotice" parameterType="int">
+    DELETE FROM notice_list
+    WHERE notice_index = #{notice_index}
+  </delete>
+
+  <delete id="deletePost" parameterType="int">
+    DELETE FROM post_list
+    WHERE post_index = #{post_index}
+  </delete>
+
+  <delete id="deleteComments" parameterType="int">
+    DELETE FROM post_comments
+    WHERE comment_index = #{comment_index};
+
+    UPDATE post_list SET comment_count = comment_count - 1
+    WHERE post_index = #{post_index};
+  </delete>
+
+  <delete id="deleteReplies" parameterType="int">
+    DELETE FROM post_reply
+    WHERE idx = #{idx};
+
+    UPDATE post_list SET comment_count = comment_count - 1
+    WHERE post_index = #{post_index};
+  </delete>
+
+  <insert id="createApproach" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.create_outdoorLocation_dto">
+    INSERT INTO outdoor_location(location_index, address_province, address_city, address_detail, latitude, longitude, name, description, isImage, score)
+    VALUES(#{location_index}, #{address_province}, #{address_city}, #{address_detail}, #{latitude}, #{longitude}, #{name}, #{description}, #{isImage}, #{score})
+  </insert>
+
+  <insert id="uploadLocationImage" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.location_image">
+    INSERT INTO location_image(image_index, location_index, origin_name, size, path)
+    VALUES(#{image_index}, #{location_index}, #{origin_name}, #{size}, #{path})
+  </insert>
+
+  <select id="checkLocationIndex" resultType="int">
+    SELECT location_index FROM outdoor_location ORDER BY location_index DESC LIMIT 1;
+  </select>
+
+  <update id="modifyApproach" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.modify_outdoorLocation_dto">
+    UPDATE outdoor_location
+    SET address_province = #{address_province}, address_city=#{address_city}, address_detail=#{address_detail}, latitude=#{latitude}, longitude=#{longitude}, 
+    name=#{name}, description = #{description}
+    WHERE location_index = #{location_index}
+  </update>
+
+  <delete id="deleteApproach" parameterType="int">
+    DELETE FROM outdoor_location
+    WHERE location_index = #{location_index}
+  </delete>
+
+  <insert id="createRoute" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.create_outdoor_route_dto">
+    INSERT INTO outdoor_route(route_index, location_index, route_name, bolt_count, difficulty, isImage, like_count)
+    VALUES(#{route_index}, #{location_index}, #{route_name}, #{bolt_count}, #{difficulty}, #{isImage}, #{like_count})
+  </insert>
+
+  <insert id="uploadRouteImage" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.location_image">
+    INSERT INTO route_image(image_index, route_index, origin_name, size, path)
+    VALUES(#{image_index}, #{route_index}, #{origin_name}, #{size}, #{path})
+  </insert>
+
+  <select id="checkRouteIndex" resultType="int">
+    SELECT route_index FROM outdoor_route ORDER BY route_index DESC LIMIT 1;
+  </select>
+
+  <update id="modifyRoute" parameterType="org.limwoongjang.gradle.climbing_platform_backend.model.aws.dto.Manage.create_outdoor_route_dto">
+    UPDATE outdoor_route
+    SET route_name = #{route_name}, bolt_count=#{bolt_count}, difficulty=#{difficulty}
+    WHERE route_index = #{route_index}
+  </update>
+
+  <delete id="deleteRoute" parameterType="int">
+    DELETE FROM outdoor_route
+    WHERE route_index = #{route_index}
+  </delete>
+
+</mapper>
